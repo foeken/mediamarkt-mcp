@@ -1,9 +1,10 @@
 {
   "name": "mediamarkt-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for MediaMarkt NL's AI shopping assistant",
   "type": "module",
   "bin": { "mediamarkt-mcp": "./index.mjs" },
+  "files": ["index.mjs", "widget.html"],
   "scripts": { "start": "node index.mjs", "check": "node index.mjs --check" },
   "license": "MIT",
   "dependencies": {

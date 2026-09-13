@@ -1,14 +1,20 @@
 #!/usr/bin/env node
 // MediaMarkt NL AI shopping assistant as an MCP server.
-// stdio (Codex/Claude):  mediamarkt-mcp            HTTP (ChatGPT):  mediamarkt-mcp --http [port]
+//   HTTP (default):  node index.mjs           -> http://localhost:${PORT:-3000}
+//   stdio:           node index.mjs --stdio
+//   UI:              MEDIAMARKT_UI=text (default) | widget   (widget = MCP Apps product carousel)
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { z } from "zod";
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36";
+const UI = process.env.MEDIAMARKT_UI === "widget" ? "widget" : "text";
+const WIDGET_URI = "ui://mediamarkt/product-carousel.html";
+const WIDGET_MIME = "text/html;profile=mcp-app";
 
 // ponytail: single-turn; pass the full messages[] history if follow-ups are ever needed.
 export async function askMediaMarkt(question, language = "en") {
@@ -27,33 +33,41 @@ export async function askMediaMarkt(question, language = "en") {
     if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
     const ev = JSON.parse(line.slice(6));
     if (ev.type === "text-delta") text += ev.delta;
-    if (ev.type === "tool-output-available") products.push(...(ev.output?.structuredContent?.data?.products ?? []));
+    if (ev.type === "tool-output-available") {
+      const images = Object.fromEntries((ev.output?._meta?.products ?? []).map(p => p.cofrProductAggregate)
+        .filter(Boolean).map(p => [p.productId, p.cofrMediaAssetsFeature?.productMainImage?.link]));
+      for (const p of ev.output?.structuredContent?.data?.products ?? []) products.push({ ...p, image: images[p.productId] });
+    }
   }
   return { text, products };
 }
 
 export function build() {
-  const s = new McpServer({ name: "mediamarkt", version: "0.1.0" });
+  const s = new McpServer({ name: "mediamarkt", version: "0.2.0" });
   s.registerTool("ask_mediamarkt",
-    { description: "Ask MediaMarkt NL's AI shopping assistant (product search, comparisons, availability, stores). It answers in the language of the question; returns the answer text plus structured products (name, price, url).",
+    { description: "Ask MediaMarkt NL's AI shopping assistant (product search, comparisons, availability, stores). It answers in the language of the question; returns the answer text plus structured products (name, price, image, url).",
       inputSchema: { question: z.string(),
-        language: z.enum(["nl", "en"]).default("en").describe("Storefront language: pick the language the user is writing in. 'en' gives English product names and /en/ URLs.") } },
+        language: z.enum(["nl", "en"]).default("en").describe("Storefront language: pick the language the user is writing in. 'en' gives English product names and /en/ URLs.") },
+      _meta: UI === "widget" ? { ui: { resourceUri: WIDGET_URI }, "openai/outputTemplate": WIDGET_URI } : undefined },
     async ({ question, language }) => { const r = await askMediaMarkt(question, language);
       return { content: [{ type: "text", text: r.text }], structuredContent: r }; });
+  if (UI === "widget") s.registerResource("product-carousel", WIDGET_URI, { mimeType: WIDGET_MIME }, async () => ({
+    contents: [{ uri: WIDGET_URI, mimeType: WIDGET_MIME, text: readFileSync(new URL("./widget.html", import.meta.url), "utf8"),
+      _meta: { ui: { prefersBorder: false, csp: { resourceDomains: ["https://assets.mmsrg.com"] } } } }] }));
   return s;
 }
 
 const argv = process.argv.slice(2);
 if (argv.includes("--check")) {
-  const r = await askMediaMarkt("What is the cheapest Ubiquiti access point?", "en");
-  console.assert(r.text.length > 20 && r.products.length > 0, "check failed", r);
-  console.log("ok:", r.text.slice(0, 160).replace(/\n/g, " "), "| products:", r.products.length);
-} else if (argv.includes("--http")) {
-  const port = Number(argv[argv.indexOf("--http") + 1]) || 3000;
+  const r = await askMediaMarkt("What is the cheapest Ubiquiti access point?");
+  console.assert(r.text.length > 20 && r.products.length > 0 && r.products[0].image, "check failed", r);
+  console.log("ok:", r.text.slice(0, 160).replace(/\n/g, " "), "| products:", r.products.length, "| ui:", UI);
+} else if (argv.includes("--stdio")) {
+  await build().connect(new StdioServerTransport());
+} else {
+  const port = Number(process.env.PORT) || 3000;
   createServer(async (req, res) => {
     const t = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined }); // stateless
     await build().connect(t); await t.handleRequest(req, res);
-  }).listen(port, () => console.error(`mediamarkt-mcp on http://localhost:${port}`));
-} else {
-  await build().connect(new StdioServerTransport());
+  }).listen(port, () => console.error(`mediamarkt-mcp (${UI}) on http://localhost:${port}`));
 }
