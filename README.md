@@ -2,6 +2,10 @@
 
 MCP server that exposes MediaMarkt NL's "AI-modus" shopping assistant as one tool, `ask_mediamarkt`.
 
+![ask_mediamarkt in ChatGPT: product carousel widget followed by the assistant's answer](docs/chatgpt-carousel.png)
+
+*ChatGPT calling `ask_mediamarkt` with `MEDIAMARKT_UI=widget`: the MCP Apps carousel shows the products, the model uses the text answer.*
+
 ## How it works
 
 The MediaMarkt site's chat widget POSTs to `https://www.mediamarkt.nl/api/v1/ai-chat` (Vercel AI SDK UI-message format, SSE response). No login or cookies are needed, only `x-mms-country/-language/-salesline` headers and a browser User-Agent. The assistant runs its own tools (search, compare, availability, stores) and streams back MCP-style tool results; this server collects the text answer plus the structured product list (with images).
