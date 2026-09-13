@@ -9,6 +9,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import { z } from "zod";
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36";
@@ -58,7 +59,10 @@ export function build() {
 }
 
 const argv = process.argv.slice(2);
-if (argv.includes("--check")) {
+const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? "").href;
+if (!isMain) {
+  // imported as a library: export only
+} else if (argv.includes("--check")) {
   const r = await askMediaMarkt("What is the cheapest Ubiquiti access point?");
   console.assert(r.text.length > 20 && r.products.length > 0 && r.products[0].image, "check failed", r);
   console.log("ok:", r.text.slice(0, 160).replace(/\n/g, " "), "| products:", r.products.length, "| ui:", UI);
