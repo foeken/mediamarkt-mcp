@@ -58,7 +58,7 @@ export function build() {
       return { content: [{ type: "text", text: r.text }], structuredContent: r }; });
   if (UI === "widget") s.registerResource("product-carousel", WIDGET_URI, { mimeType: WIDGET_MIME }, async () => ({
     contents: [{ uri: WIDGET_URI, mimeType: WIDGET_MIME, text: readFileSync(new URL("./widget.html", import.meta.url), "utf8"),
-      _meta: { ui: { prefersBorder: false, csp: { resourceDomains: ["https://assets.mmsrg.com"] } } } }] }));
+      _meta: { ui: { prefersBorder: false, domain: "https://mediamarkt-mcp.taila4148b.ts.net", csp: { resourceDomains: ["https://assets.mmsrg.com"] } } } }] }));
   return s;
 }
 
