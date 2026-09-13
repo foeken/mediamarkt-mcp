@@ -11,7 +11,7 @@ import { z } from "zod";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36";
 
 // ponytail: single-turn; pass the full messages[] history if follow-ups are ever needed.
-export async function askMediaMarkt(question, language = "nl") {
+export async function askMediaMarkt(question, language = "en") {
   const id = `conv_${randomUUID()}`;
   const res = await fetch("https://www.mediamarkt.nl/api/v1/ai-chat", {
     method: "POST",
@@ -37,7 +37,7 @@ export function build() {
   s.registerTool("ask_mediamarkt",
     { description: "Ask MediaMarkt NL's AI shopping assistant (product search, comparisons, availability, stores). It answers in the language of the question; returns the answer text plus structured products (name, price, url).",
       inputSchema: { question: z.string(),
-        language: z.enum(["nl", "en"]).default("nl").describe("Storefront language: pick the language the user is writing in. 'en' gives English product names and /en/ URLs.") } },
+        language: z.enum(["nl", "en"]).default("en").describe("Storefront language: pick the language the user is writing in. 'en' gives English product names and /en/ URLs.") } },
     async ({ question, language }) => { const r = await askMediaMarkt(question, language);
       return { content: [{ type: "text", text: r.text }], structuredContent: r }; });
   return s;

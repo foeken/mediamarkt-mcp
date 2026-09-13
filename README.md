@@ -31,4 +31,4 @@ node index.mjs --http 3000   # then expose it, e.g. cloudflared tunnel --url htt
 
 ## Tool
 
-`ask_mediamarkt({ question, language? })` — `language` is `nl` (default) or `en`; the answer follows the question's language, `en` also switches product names and URLs to the English storefront. Returns `content[0].text` (the assistant's answer) and `structuredContent.products[]` (`productId`, `ean`, `name`, `brand`, `price`, `currency`, `deliveryTime`, `url`).
+`ask_mediamarkt({ question, language? })` — `language` is `en` (default) or `nl`; the answer follows the question's language, `en` also switches product names and URLs to the English storefront. Returns `content[0].text` (the assistant's answer) and `structuredContent.products[]` (`productId`, `ean`, `name`, `brand`, `price`, `currency`, `deliveryTime`, `url`).
