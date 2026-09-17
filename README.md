@@ -35,7 +35,7 @@ Settings (environment):
 | Variable        | Values              | Default | Effect |
 | --------------- | ------------------- | ------- | ------ |
 | `PORT`          | number              | `3000`  | HTTP port |
-| `MEDIAMARKT_UI` | `text` \| `widget` | `text`  | `widget` attaches an [MCP Apps](https://modelcontextprotocol.io/docs/extensions/apps) product carousel (`ui://mediamarkt/product-carousel.html`) to the tool; hosts that render MCP Apps (ChatGPT) show product cards with image, name, price and link, other hosts just get the text |
+| `MEDIAMARKT_UI` | `text` \| `widget` | `text`  | `widget` attaches an [MCP Apps](https://modelcontextprotocol.io/docs/extensions/apps) product carousel (`ui://mediamarkt/product-carousel/v2.html`) to the tool; hosts that render MCP Apps (ChatGPT) show product cards with image, name, price, seller and link, other hosts just get the text |
 
 ## Connect
 
@@ -47,4 +47,4 @@ For ChatGPT, expose the HTTP server publicly (e.g. `cloudflared tunnel --url htt
 
 ## Tool
 
-`ask_mediamarkt({ question, language? })` — `language` is `en` (default) or `nl`; the answer follows the question's language, `en` also switches product names and URLs to the English storefront. Returns `content[0].text` (the assistant's answer) and `structuredContent.products[]` (`productId`, `ean`, `name`, `brand`, `price`, `currency`, `deliveryTime`, `url`, `image`).
+`ask_mediamarkt({ question, language? })` — `language` is `en` (default) or `nl`; the answer follows the question's language, `en` also switches product names and URLs to the English storefront. Returns `content[0].text` (the assistant's answer plus product names, prices and sellers) and `structuredContent.products[]` (`productId`, `ean`, `name`, `brand`, `price`, `currency`, `seller`, `deliveryTime`, `url`, `image`).

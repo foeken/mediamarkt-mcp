@@ -20,6 +20,7 @@ function render(result) {
     ${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : ""}
     <div class="name">${esc(p.name)}</div>
     <div class="price">€ ${Number(p.price).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</div>
+    ${p.seller ? `<div class="meta">${esc(p.seller)}</div>` : ""}
     ${p.deliveryTime ? `<div class="meta">${nl ? "Levering" : "Delivery"} ${esc(p.deliveryTime.slice(0, 10))}</div>` : ""}
   </a>`).join("") || `<div class="meta">${nl ? "Geen producten" : "No products"}</div>`;
   post({ jsonrpc: "2.0", method: "ui/notifications/size-changed", params: { height: document.documentElement.scrollHeight } });
