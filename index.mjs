@@ -18,6 +18,7 @@ const HOST = process.env.MEDIAMARKT_MCP_HOST || "127.0.0.1";
 const PORT = Number(process.env.MEDIAMARKT_MCP_PORT || process.env.PORT || "3000");
 const BEARER_TOKEN = process.env.MEDIAMARKT_MCP_TOKEN;
 const PUBLIC_URL = process.env.MEDIAMARKT_MCP_PUBLIC_URL || `http://${HOST}:${PORT}/mcp`;
+const WIDGET_DOMAIN = process.env.MEDIAMARKT_MCP_WIDGET_DOMAIN;
 const WIDGET_URI = "ui://mediamarkt/product-carousel/v2.html";
 const WIDGET_MIME = "text/html;profile=mcp-app";
 
@@ -48,6 +49,7 @@ export async function askMediaMarkt(question, language = "en") {
 }
 
 export function build() {
+  if (UI === "widget" && !WIDGET_DOMAIN) throw new Error("MEDIAMARKT_MCP_WIDGET_DOMAIN is required when MEDIAMARKT_UI=widget");
   const s = new McpServer({ name: "mediamarkt", version: "0.2.0" });
   s.registerTool("ask_mediamarkt",
     { description: "Ask MediaMarkt NL's AI shopping assistant (product search, comparisons, availability, stores). It answers in the language of the question; returns the answer text plus structured products (name, price, seller, image, url).",
@@ -59,7 +61,7 @@ export function build() {
       return { content: [{ type: "text", text: [r.text, products && `Products:\n${products}`].filter(Boolean).join("\n\n") }], structuredContent: r }; });
   if (UI === "widget") s.registerResource("product-carousel", WIDGET_URI, { mimeType: WIDGET_MIME }, async () => ({
     contents: [{ uri: WIDGET_URI, mimeType: WIDGET_MIME, text: readFileSync(new URL("./widget.html", import.meta.url), "utf8"),
-      _meta: { ui: { prefersBorder: false, domain: "https://mediamarkt-mcp.taila4148b.ts.net", csp: { resourceDomains: ["https://assets.mmsrg.com"] } } } }] }));
+      _meta: { ui: { prefersBorder: false, domain: WIDGET_DOMAIN, csp: { resourceDomains: ["https://assets.mmsrg.com"] } } } }] }));
   return s;
 }
 

@@ -35,6 +35,8 @@ Settings (environment):
 | Variable        | Values              | Default | Effect |
 | --------------- | ------------------- | ------- | ------ |
 | `PORT`          | number              | `3000`  | HTTP port |
+| `MEDIAMARKT_MCP_PUBLIC_URL` | URL | derived from host and port | Public MCP endpoint; separate from the widget origin |
+| `MEDIAMARKT_MCP_WIDGET_DOMAIN` | HTTPS origin | unset | Widget origin; required only when `MEDIAMARKT_UI=widget` |
 | `MEDIAMARKT_UI` | `text` \| `widget` | `text`  | `widget` attaches an [MCP Apps](https://modelcontextprotocol.io/docs/extensions/apps) product carousel (`ui://mediamarkt/product-carousel/v2.html`) to the tool; hosts that render MCP Apps (ChatGPT) show product cards with image, name, price, seller and link, other hosts just get the text |
 
 ## Connect
@@ -44,6 +46,8 @@ codex mcp add mediamarkt --url http://localhost:3000
 ```
 
 For ChatGPT, expose the HTTP server publicly (e.g. `cloudflared tunnel --url http://localhost:3000`) and add the URL under Settings → Apps in developer mode. Run with `MEDIAMARKT_UI=widget` to get the carousel.
+
+Widget mode is opt-in for new users: set `MEDIAMARKT_MCP_WIDGET_DOMAIN` to the widget host's HTTPS origin. The local LaunchAgent derives both its public MCP URL and widget origin from the machine's current Tailscale hostname while keeping `MEDIAMARKT_UI=widget` enabled locally.
 
 ## Tool
 
