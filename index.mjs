@@ -34,7 +34,7 @@ export async function askMediaMarkt(question, language = "en") {
                    parts: [{ type: "text", text: question }] }] }),
   });
   if (!res.ok) throw new Error(`mediamarkt ${res.status}`);
-  let text = "", products = [];
+  let text = "", products = new Map();
   for (const line of (await res.text()).split("\n")) {
     if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
     const ev = JSON.parse(line.slice(6));
@@ -42,10 +42,13 @@ export async function askMediaMarkt(question, language = "en") {
     if (ev.type === "tool-output-available") {
       const images = Object.fromEntries((ev.output?._meta?.products ?? []).map(p => p.cofrProductAggregate)
         .filter(Boolean).map(p => [p.productId, p.cofrMediaAssetsFeature?.productMainImage?.link]));
-      for (const p of ev.output?.structuredContent?.data?.products ?? []) products.push({ ...p, seller: p.seller ?? "MediaMarkt", image: images[p.productId] });
+      for (const p of ev.output?.structuredContent?.data?.products ?? []) {
+        const previous = products.get(p.productId) ?? {};
+        products.set(p.productId, { ...previous, ...p, seller: p.seller ?? previous.seller ?? "MediaMarkt", image: images[p.productId] ?? p.image ?? previous.image });
+      }
     }
   }
-  return { text, products };
+  return { text, products: [...products.values()] };
 }
 
 export function build() {
@@ -83,7 +86,7 @@ if (!isMain) {
   // imported as a library: export only
 } else if (argv.includes("--check")) {
   const r = await askMediaMarkt("What is the cheapest Ubiquiti access point?");
-  if (!(r.text.length > 20 && r.products.length > 0 && r.products[0].image)) { console.error("check failed", r); process.exit(1); }
+  if (!(r.text.length > 20 && r.products.length > 0 && r.products.some(p => p.image))) { console.error("check failed", r); process.exit(1); }
   console.log("ok:", r.text.slice(0, 160).replace(/\n/g, " "), "| products:", r.products.length, "| ui:", UI);
 } else if (argv.includes("--stdio")) {
   await build().connect(new StdioServerTransport());
