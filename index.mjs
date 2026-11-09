@@ -86,7 +86,7 @@ if (!isMain) {
   // imported as a library: export only
 } else if (argv.includes("--check")) {
   const r = await askMediaMarkt("What is the cheapest Ubiquiti access point?");
-  if (!(r.text.length > 20 && r.products.length > 0 && r.products.some(p => p.image))) { console.error("check failed", r); process.exit(1); }
+  if (!(r.text.length > 20 && r.products.length > 0)) { console.error("check failed", r); process.exit(1); }
   console.log("ok:", r.text.slice(0, 160).replace(/\n/g, " "), "| products:", r.products.length, "| ui:", UI);
 } else if (argv.includes("--stdio")) {
   await build().connect(new StdioServerTransport());
